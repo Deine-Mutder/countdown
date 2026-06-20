@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Countdown</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-gradient-1: #0b091a;
+            --bg-gradient-2: #161233;
+            --accent-glow-1: rgba(138, 43, 226, 0.4);
+            --accent-glow-2: rgba(0, 242, 254, 0.3);
+            
+            --card-bg: rgba(255, 255, 255, 0.03);
+            --card-border: rgba(255, 255, 255, 0.08);
+            
+            --color-days: #ff007f;
+            --color-hours: #7f00ff;
+            --color-minutes: #00f2fe;
+            --color-seconds: #00ff87;
+            
+            --text-primary: #ffffff;
+            --text-secondary: rgba(255, 255, 255, 0.6);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Outfit', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        body {
+            background-color: var(--bg-gradient-1);
+            background-image: 
+                radial-gradient(circle at 10% 20%, var(--accent-glow-1) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, var(--accent-glow-2) 0%, transparent 40%),
+                linear-gradient(135deg, var(--bg-gradient-1) 0%, var(--bg-gradient-2) 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: var(--text-primary);
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Ambient floating particles in background */
+        .particles {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .particle {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            animation: float 25s infinite linear;
+        }
+
+        @keyframes float {
+            0% {
+                transform: translateY(100vh) translateX(0) scale(1);
+                opacity: 0;
+            }
+            10% {
+                opacity: 0.8;
+            }
+            90% {
+                opacity: 0.8;
+            }
+            100% {
+                transform: translateY(-10vh) translateX(100px) scale(0.5);
+                opacity: 0;
+            }
+        }
+
+        .container {
+            position: relative;
+            z-index: 2;
+            width: 90%;
+            max-width: 900px;
+            padding: 40px;
+            border-radius: 30px;
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--card-border);
+            box-shadow: 0 30px 70px rgba(0, 0, 0, 0.5),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            text-align: center;
+            animation: fadeIn 1.2s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            font-weight: 800;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 40px;
+            background: linear-gradient(to right, #ffffff, #a5a1ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .countdown-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 25px;
+            margin-bottom: 20px;
+        }
+
+        .time-box {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.015);
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            border-radius: 20px;
+            padding: 25px 15px;
+            transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+            overflow: hidden;
+        }
+
+        .time-box::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, transparent 100%);
+            pointer-events: none;
+        }
+
+        .time-box:hover {
+            transform: translateY(-5px);
+            border-color: rgba(255, 255, 255, 0.1);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.25);
+        }
+
+        /* SVG Circle progress styles */
+        .circle-container {
+            position: relative;
+            width: 130px;
+            height: 130px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        svg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            transform: rotate(-90deg);
+        }
+
+        circle {
+            fill: none;
+            stroke-width: 6;
+            stroke-linecap: round;
+        }
+
+        .bg-circle {
+            stroke: rgba(255, 255, 255, 0.04);
+        }
+
+        .progress-circle {
+            stroke-dasharray: 345.57; /* 2 * PI * r (r=55) */
+            stroke-dashoffset: 345.57;
+            transition: stroke-dashoffset 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .days-circle { stroke: var(--color-days); filter: drop-shadow(0 0 8px var(--color-days)); }
+        .hours-circle { stroke: var(--color-hours); filter: drop-shadow(0 0 8px var(--color-hours)); }
+        .minutes-circle { stroke: var(--color-minutes); filter: drop-shadow(0 0 8px var(--color-minutes)); }
+        .seconds-circle { stroke: var(--color-seconds); filter: drop-shadow(0 0 8px var(--color-seconds)); }
+
+        .time-val {
+            font-size: 2.5rem;
+            font-weight: 800;
+            letter-spacing: -1px;
+            z-index: 2;
+        }
+
+        .label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-top: 15px;
+            color: var(--text-secondary);
+            transition: color 0.3s;
+        }
+
+        .time-box:hover .label {
+            color: var(--text-primary);
+        }
+
+        .target-info {
+            margin-top: 35px;
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            letter-spacing: 1px;
+            font-weight: 300;
+        }
+
+        .target-date {
+            color: #a5a1ff;
+            font-weight: 600;
+        }
+
+        /* End Screen Style */
+        .finished-container {
+            display: none;
+            animation: scaleIn 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        @keyframes scaleIn {
+            from {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .finished-title {
+            font-size: 3.5rem;
+            font-weight: 800;
+            background: linear-gradient(45deg, #ff007f, #00f2fe, #00ff87);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 20px;
+            letter-spacing: 1px;
+            animation: pulseGlow 2s infinite alternate;
+        }
+
+        @keyframes pulseGlow {
+            0% {
+                filter: drop-shadow(0 0 2px rgba(0, 242, 254, 0.2));
+            }
+            100% {
+                filter: drop-shadow(0 0 15px rgba(0, 242, 254, 0.8));
+            }
+        }
+
+        .finished-text {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            margin-bottom: 30px;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .countdown-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 15px;
+            }
+            
+            .circle-container {
+                width: 110px;
+                height: 110px;
+            }
+
+            .time-val {
+                font-size: 2rem;
+            }
+
+            h1 {
+                font-size: 1.8rem;
+                margin-bottom: 30px;
+            }
+
+            .container {
+                padding: 25px 15px;
+            }
+
+            circle {
+                stroke-width: 5;
+            }
+
+            /* Adjust dasharray for smaller radius */
+            .progress-circle {
+                stroke-dasharray: 314.16; /* 2 * PI * 50 */
+                stroke-dashoffset: 314.16;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .countdown-grid {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+
+            .circle-container {
+                width: 120px;
+                height: 120px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Background particles -->
+    <div class="particles" id="particles"></div>
+
+    <div class="container" id="countdown-card">
+        <h1 id="header-title">Countdown to Target</h1>
+        
+        <div class="countdown-grid" id="timer-grid">
+            <!-- DAYS -->
+            <div class="time-box">
+                <div class="circle-container">
+                    <svg viewBox="0 0 140 140">
+                        <circle class="bg-circle" cx="70" cy="70" r="55"></circle>
+                        <circle class="progress-circle days-circle" id="days-progress" cx="70" cy="70" r="55"></circle>
+                    </svg>
+                    <span class="time-val" id="days">00</span>
+                </div>
+                <span class="label">Days</span>
+            </div>
+
+            <!-- HOURS -->
+            <div class="time-box">
+                <div class="circle-container">
+                    <svg viewBox="0 0 140 140">
+                        <circle class="bg-circle" cx="70" cy="70" r="55"></circle>
+                        <circle class="progress-circle hours-circle" id="hours-progress" cx="70" cy="70" r="55"></circle>
+                    </svg>
+                    <span class="time-val" id="hours">00</span>
+                </div>
+                <span class="label">Hours</span>
+            </div>
+
+            <!-- MINUTES -->
+            <div class="time-box">
+                <div class="circle-container">
+                    <svg viewBox="0 0 140 140">
+                        <circle class="bg-circle" cx="70" cy="70" r="55"></circle>
+                        <circle class="progress-circle minutes-circle" id="minutes-progress" cx="70" cy="70" r="55"></circle>
+                    </svg>
+                    <span class="time-val" id="minutes">00</span>
+                </div>
+                <span class="label">Minutes</span>
+            </div>
+
+            <!-- SECONDS -->
+            <div class="time-box">
+                <div class="circle-container">
+                    <svg viewBox="0 0 140 140">
+                        <circle class="bg-circle" cx="70" cy="70" r="55"></circle>
+                        <circle class="progress-circle seconds-circle" id="seconds-progress" cx="70" cy="70" r="55"></circle>
+                    </svg>
+                    <span class="time-val" id="seconds">00</span>
+                </div>
+                <span class="label">Seconds</span>
+            </div>
+        </div>
+
+        <!-- Target Date Info -->
+        <div class="target-info" id="target-info-text">
+            Ends on: <span class="target-date">July 24, 2026 at 21:58</span>
+        </div>
+
+        <!-- Finished Content -->
+        <div class="finished-container" id="finished-content">
+            <div class="finished-title">Time's Up!</div>
+            <div class="finished-text">The countdown expired on July 24, 2026 at 21:58.</div>
+        </div>
+    </div>
+
+    <script>
+        // Generate background floating particles
+        function createParticles() {
+            const container = document.getElementById('particles');
+            const count = 25;
+            for (let i = 0; i < count; i++) {
+                const particle = document.createElement('div');
+                particle.classList.add('particle');
+                
+                // Random sizing
+                const size = Math.random() * 6 + 2;
+                particle.style.width = `${size}px`;
+                particle.style.height = `${size}px`;
+                
+                // Random positioning
+                particle.style.left = `${Math.random() * 100}vw`;
+                
+                // Random animation delay & duration
+                particle.style.animationDuration = `${Math.random() * 15 + 15}s`;
+                particle.style.animationDelay = `${Math.random() * -20}s`;
+                
+                // Random opacity
+                particle.style.opacity = Math.random() * 0.5 + 0.2;
+                
+                container.appendChild(particle);
+            }
+        }
+        createParticles();
+
+        // Set the Target Date: 24 July 2026 at 21:58:00 Local Time
+        const targetDate = new Date(2026, 6, 24, 21, 58, 0); // Note: July is month 6 (0-indexed)
+        
+        // Initial setup for days progress circle logic
+        // Calculate the total duration from page load (or 34 days max if already running)
+        const initialDifference = targetDate.getTime() - new Date().getTime();
+        const totalDurationDays = Math.max(34, Math.ceil(initialDifference / (1000 * 60 * 60 * 24)));
+
+        function updateCircleProgress(elementId, value, maxVal) {
+            const circle = document.getElementById(elementId);
+            if (!circle) return;
+            
+            // Handle cross-browser/responsive radius retrieval
+            let r = 55;
+            if (window.innerWidth <= 768) {
+                r = 50;
+            }
+            const circumference = 2 * Math.PI * r;
+            
+            circle.style.strokeDasharray = circumference;
+            const offset = circumference - (value / maxVal) * circumference;
+            circle.style.strokeDashoffset = offset;
+        }
+
+        function updateCountdown() {
+            const now = new Date();
+            const difference = targetDate.getTime() - now.getTime();
+
+            if (difference <= 0) {
+                // Countdown completed
+                document.getElementById('timer-grid').style.display = 'none';
+                document.getElementById('target-info-text').style.display = 'none';
+                document.getElementById('header-title').style.display = 'none';
+                document.getElementById('finished-content').style.display = 'block';
+                return;
+            }
+
+            // Calculation
+            const days = Math.floor(difference / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((difference % (1000 * 60)) / 1000);
+
+            // Display values with leading zeros
+            document.getElementById('days').innerText = String(days).padStart(2, '0');
+            document.getElementById('hours').innerText = String(hours).padStart(2, '0');
+            document.getElementById('minutes').innerText = String(minutes).padStart(2, '0');
+            document.getElementById('seconds').innerText = String(seconds).padStart(2, '0');
+
+            // Update circular progress bars
+            updateCircleProgress('days-progress', days, totalDurationDays);
+            updateCircleProgress('hours-progress', hours, 24);
+            updateCircleProgress('minutes-progress', minutes, 60);
+            updateCircleProgress('seconds-progress', seconds, 60);
+        }
+
+        // Run immediately on load and then every 1 second
+        updateCountdown();
+        const intervalId = setInterval(updateCountdown, 1000);
+
+        // Recalculate progress offsets on resize to handle changing SVG sizes
+        window.addEventListener('resize', () => {
+            updateCountdown();
+        });
+    </script>
+</body>
+</html>
